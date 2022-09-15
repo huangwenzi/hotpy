@@ -10,3 +10,4 @@
 在需要热更的类中继承hotpy.HotObj  
 调用hotpy.hot_mgr.hot(mod_name)  
 会热更mod和它里面的类对象  
+![](https://github.com/huangwenzi/hotpy/blob/main/img/hotpy_test.gif)
