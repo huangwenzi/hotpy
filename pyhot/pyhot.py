@@ -2,6 +2,7 @@ import importlib
 import sys
 import inspect
 import copy
+import os
 
 can_copy_type = [type(1),type(""),type([]),type({})]
 
@@ -12,11 +13,23 @@ class HotObj():
         # 添加到热更管理器
         if hot_mgr.need_add:
             hot_mgr.add_obj(self)
+            
+# 文件对象
+class FileObj():
+    path = ""
+    time = 0
+    mod = ""
+    def __init__(self, file_path, mod_name):
+        self.path = file_path
+        self.mod = mod_name
+        self.time = os.stat(file_path).st_mtime
 
 # 热更管理器
 class HotMgr():
     obj_map = {}            # 对象map
     need_add = True         # 是否需要加到管理
+    
+    file_map = {}           # 文件map
     def __init__(self):
         self.obj_map = {}
         
@@ -27,13 +40,73 @@ class HotMgr():
         if class_name not in self.obj_map:
             self.obj_map[class_name] = []
         self.obj_map[class_name].append(obj)
-
-    # 开始热更
-    def hot(self, file_name):
-        if file_name not in sys.modules:
-            importlib.import_module(file_name)
+    
+    # 获取模块文件对象
+    def get_file_obj(self, mod_name):
+        if mod_name in self.file_map:
+            return self.file_map[mod_name]
+        else:
+            importlib.import_module(mod_name)
+            mod = sys.modules[mod_name]
+            file_obj = FileObj(mod.__file__, mod_name)
+            file_obj.time = 0
+            self.file_map[mod_name] = file_obj
+            return file_obj
+    
+    # 地址转模块名格式
+    def path_to_mod_name(self, path:str):
+        # 去掉前面的 ./
+        if path.find("./") == 0:
+            path = path[2:]
+        path = path.replace("\\", ".")
+        path = path.replace("/", ".")
+        end_idx = path.rfind(".")
+        path = path[:end_idx]
+        return path
+    
+    # 初始化文件变化记录
+    def init_file_record(self):
+        for root, dirs, files in os.walk("./", topdown=False):
+            for name in files:
+                # 跳过文件 没有后缀、不是py文件、.开头、_开头
+                end_idx = name.rfind(".")
+                if end_idx < 0 or name[end_idx:] != ".py" or name[0] == "." or name[0] == "_":
+                    continue
+                file_path = os.path.join(root, name)
+                mod_name = self.path_to_mod_name(file_path)
+                file_obj = FileObj(file_path, mod_name)
+                self.file_map[mod_name] = file_obj
+    
+    # 热更目录下文件
+    def hot_all(self):
+        for root, dirs, files in os.walk("./", topdown=False):
+            for name in files:
+                # 跳过文件 没有后缀、不是py文件、.开头、_开头
+                end_idx = name.rfind(".")
+                if end_idx < 0 or name[end_idx:] != ".py" or name[0] == "." or name[0] == "_":
+                    continue
+                file_path = os.path.join(root, name)
+                mod_name = self.path_to_mod_name(file_path)
+                # 不在map不需要热更， 修改时间一致不需要热更
+                if mod_name not in self.file_map or self.file_map[mod_name].time == os.stat(file_path).st_mtime:
+                    # 更新file_obj
+                    file_obj = FileObj(file_path, mod_name)
+                    self.file_map[mod_name] = file_obj
+                    continue
+                else:
+                    self.hot(mod_name)
+    
+    # 热更模块
+    def hot(self, mod_name):
+        file_obj = self.get_file_obj(mod_name)
+        # 是否有变化
+        now_time = os.stat(file_obj.path).st_mtime
+        if file_obj.time == now_time:
+            return
+        file_obj.time = now_time
+        
         # 重载模块
-        mod = sys.modules[file_name]
+        mod = sys.modules[mod_name]
         importlib.reload(mod)
         # 热更类对象
         self.need_add = False
@@ -72,5 +145,4 @@ class HotMgr():
                                 setattr(tmp_obj, class_attr_k, new_attr)
                 # print("hot class:%s, num:%s"%(class_name, len(self.obj_map[class_name])))
         self.need_add = True
-
 hot_mgr = HotMgr()

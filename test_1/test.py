@@ -1,6 +1,5 @@
 import pyhot.pyhot as pyhot
 
-
 class TestObj(pyhot.HotObj):
     obj_id = 0
     def __init__(self, obj_id=0):
@@ -14,7 +13,7 @@ class TestObj_1(pyhot.HotObj):
     obj_id = 0
     new_obj_id = 0
     new_obj_id_1 = 1
-    new_obj_id_2 = 1
+    new_obj_id_2 = 2
     new_obj_id_3 = 3
     new_obj_id_4 = 4
     def __init__(self, obj_id=0):
