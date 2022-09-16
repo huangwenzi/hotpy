@@ -12,8 +12,13 @@
 会热更mod和它里面的类对象  
 ![](https://github.com/huangwenzi/hotpy/blob/main/img/hotpy_test.gif)
 
-## 方法二
-初始化调用 pyhot.hot_mgr.init_file_record()  
-需要更新的时候再调用 pyhot.hot_mgr.hot_all()  
+## 方法二（推荐）
+初始化调用  
+pyhot.hot_mgr.init_file_record()  
+
+需要更新的时候再调用  
+pyhot.hot_mgr.hot_all()  
 会自动更新项目下的全部文件  
-不需要更新全部文件也可以继续用 hotpy.hot_mgr.hot(mod_name)  
+
+不需要更新全部文件也可以继续用  
+hotpy.hot_mgr.hot(mod_name)  
