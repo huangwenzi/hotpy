@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="pyhot",#这里是库名
-    version="1.0.0",#版本
+    version="1.0.1",#版本
     packages = setuptools.find_packages(),
     author="hw",#开发人员
     author_email="811417477@qq.com",#开发人员邮箱
